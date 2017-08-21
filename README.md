@@ -1,2 +1,2 @@
 # swift-client-bash
-## test
+OpenStack Swift Bash Client
