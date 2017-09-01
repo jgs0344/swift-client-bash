@@ -11,13 +11,16 @@ OS_PROJECT_DOMAIN_ID="projectDomainId"
 OS_USER_DOMAIN_ID="userDomainId"
 publicURL="http://swift.test.com:8080/v1/AUTH_projectId"
 
-token=$(curl -i -s -X POST $OS_AUTH_URL/auth/tokens?nocatalog -H "Content-Type: application/json" -d \
+getToken() {
+    token=$(curl -i -s -X POST $OS_AUTH_URL/auth/tokens?nocatalog -H "Content-Type: application/json" -d \
     '{ "auth":
         { "identity":
 	    { "methods": ["password"],"password": {"user": {"domain": {"id": "'"$OS_USER_DOMAIN_ID"'"},"name": "'"$OS_USERNAME"'", "password": "'"$OS_PASSWORD"'"} } },
 	  "scope": { "project": { "domain": { "id": "'"$OS_PROJECT_DOMAIN_ID"'" }, "name":  "'"$OS_PROJECT_NAME"'" } }
         }
      }' | grep X-Subject-Token | awk '{print $NF}')
+     expireTimestamp=$(echo "$(date +"%s") + 3600" | bc)
+}
 
 displayEx() {
     case "${1}" in
@@ -124,8 +127,14 @@ upload() {
             files=$(find ${3} -type f -print0|xargs -0 -n 1 echo )
             for object in ${files}
             do
-                curl -s $publicURL/${2}/${object} -X PUT -T ${object} -H "X-Auth-Token: $token"
-                printf "%s\n" "${object}"
+                currentTimestamp=$(date +"%s")
+                timeDiff=$(echo "${expireTimestamp} - ${currentTimestamp}" | bc)
+                if [ ${timeDiff} -lt 300 ]; then
+                    getToken
+                else
+                    curl -s $publicURL/${2}/${object} -X PUT -T ${object} -H "X-Auth-Token: $token"
+                    printf "%s\n" "${object}"
+                fi
             done
             exit 0
         fi
