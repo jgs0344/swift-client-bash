@@ -11,7 +11,7 @@ OS_PROJECT_DOMAIN_ID="projectDomainId"
 OS_USER_DOMAIN_ID="userDomainId"
 publicURL="http://swift.test.com:8080/v1/AUTH_projectId"
 
-# 토큰 호출
+# get token
 getToken() {
     token=$(curl -i -s -X POST $OS_AUTH_URL/auth/tokens?nocatalog -H "Content-Type: application/json" -d \
     '{ "auth":
